@@ -1,22 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сервер</title>
 </head>
 <body>
-    <h1>Server is running...</h1>
-    <script>
-        const { exec } = require('child_process');
-        exec('node server.js', (err, stdout, stderr) => {
-            if (err) {
-                console.error(`Error: ${err}`);
-                return;
-            }
-            console.log(`stdout: ${stdout}`);
-            console.error(`stderr: ${stderr}`);
-        });
-    </script>
+  <div id="status">Ждём подключения...</div>
+
+  <script>
+    // Эмуляция WebSocket сервера
+    const clients = []; // Хранилище подключенных клиентов
+
+    function connectClient(client) {
+      clients.push(client);
+
+      // Имитация отправки сообщения клиенту
+      client.send('Привет, клиент!');
+
+      // Обработка сообщений от клиента
+      client.onmessage = (event) => {
+        console.log('Получено сообщение от клиента:', event.data);
+      };
+
+      // Обработка закрытия соединения
+      client.onclose = () => {
+        const index = clients.indexOf(client);
+        if (index > -1) {
+          clients.splice(index, 1);
+          console.log('Соединение с клиентом закрыто');
+        }
+      };
+    }
+
+    // Функция эмуляции сервера
+    function startServer() {
+      console.log('Сервер запущен');
+
+      // Эмуляция подключения клиента
+      const client = {
+        send: (message) => {
+          console.log('Отправка сообщения клиенту:', message);
+          onClientMessage(message);
+        },
+        close: () => {
+          console.log('Закрытие соединения с клиентом');
+          onClientClose();
+        }
+      };
+
+      connectClient(client);
+    }
+
+    function onClientMessage(message) {
+      document.getElementById('status').innerText = 'Сообщение от клиента: ' + message;
+    }
+
+    function onClientClose() {
+      document.getElementById('status').innerText = 'Соединение с клиентом закрыто';
+    }
+
+    startServer(); // Запуск эмуляции сервера
+  </script>
 </body>
 </html>
