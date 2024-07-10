@@ -9,58 +9,26 @@
   <div id="status">Ждём подключения...</div>
 
   <script>
-    // Эмуляция WebSocket сервера
-    const clients = []; // Хранилище подключенных клиентов
+    const serverUrl = 'wss://echo.websocket.org/'; // Используем WebSocket прокси
 
-    function connectClient(client) {
-      clients.push(client);
+    const connection = new WebSocket(serverUrl);
 
-      // Имитация отправки сообщения клиенту
-      client.send('Привет, клиент!');
+    connection.onopen = () => {
+      document.getElementById('status').innerText = 'Подключено!';
+    };
 
-      // Обработка сообщений от клиента
-      client.onmessage = (event) => {
-        console.log('Получено сообщение от клиента:', event.data);
-      };
+    connection.onmessage = (event) => {
+      document.getElementById('status').innerText = 'Сообщение от клиента: ' + event.data;
+      connection.send('Привет, клиент!');
+    };
 
-      // Обработка закрытия соединения
-      client.onclose = () => {
-        const index = clients.indexOf(client);
-        if (index > -1) {
-          clients.splice(index, 1);
-          console.log('Соединение с клиентом закрыто');
-        }
-      };
-    }
+    connection.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+    };
 
-    // Функция эмуляции сервера
-    function startServer() {
-      console.log('Сервер запущен');
-
-      // Эмуляция подключения клиента
-      const client = {
-        send: (message) => {
-          console.log('Отправка сообщения клиенту:', message);
-          onClientMessage(message);
-        },
-        close: () => {
-          console.log('Закрытие соединения с клиентом');
-          onClientClose();
-        }
-      };
-
-      connectClient(client);
-    }
-
-    function onClientMessage(message) {
-      document.getElementById('status').innerText = 'Сообщение от клиента: ' + message;
-    }
-
-    function onClientClose() {
-      document.getElementById('status').innerText = 'Соединение с клиентом закрыто';
-    }
-
-    startServer(); // Запуск эмуляции сервера
+    connection.onclose = () => {
+      console.warn('Соединение закрыто');
+    };
   </script>
 </body>
 </html>
