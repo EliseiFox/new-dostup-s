@@ -20,4 +20,4 @@ server.on('connection', (socket) => {
     });
 });
 
-console.log('Server is running on ws://localhost:5555');
+console.log('Server is running on ws://https://eliseifox.github.io/new-dostup-c/:5555');
