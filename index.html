@@ -1,12 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Game</title>
+    <title>WebSocket Chat</title>
 </head>
 <body>
-    <h1>Welcome to Multiplayer Game</h1>
-    <script src="client.js"></script>
+    <div id="messages"></div>
+    <input type="text" id="message">
+    <button onclick="sendMessage()">Отправить</button>
+
+    <script>
+        const socket = new WebSocket('wss://humble-space-yodel-wrx64rqj775cvgwj-8080.app.github.dev/');
+
+        socket.onopen = () => {
+            console.log('Соединение установлено');
+        };
+
+        socket.onmessage = (event) => {
+            const message = event.data;
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p>${message}</p>`;
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            socket.send(messageInput.value);
+            messageInput.value = '';
+        }
+    </script>
 </body>
 </html>
