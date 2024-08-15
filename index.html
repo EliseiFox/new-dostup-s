@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiply by 2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+
+    <title>Multiply   
+ by 2</title>
 </head>
 <body>
     <h1>Enter a number:</h1>
@@ -12,17 +14,17 @@
     <p id="result"></p>
 
     <script>
-        const net = require('net');
+        const socket = new WebSocket('ws://212.58.119.152:8080');
 
-const client = new net.Socket();
-client.connect(8080, '212.58.119.152', () => {
-    client.write(JSON.stringify({ number: 10 }));
-});
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            document.getElementById('result').innerText = `Result: ${data.result}`;
+        };
 
-client.on('data', (data) => {
-    console.log(data.toString());
-    client.destroy();
-});
+        function sendRequest() {
+            const number = document.getElementById('numberInput').value;
+            socket.send(JSON.stringify({ number: number }));
+        }
     </script>
 </body>
 </html>
