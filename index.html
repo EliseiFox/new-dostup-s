@@ -12,17 +12,17 @@
     <p id="result"></p>
 
     <script>
-        function sendRequest() {
-            const number = document.getElementById('numberInput').value;
-            fetch(`https://212.58.119.152:8080?number=${number}`)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('result').innerText = `Result: ${data}`;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
+        const net = require('net');
+
+const client = new net.Socket();
+client.connect(8080, '212.58.119.152', () => {
+    client.write(JSON.stringify({ number: 10 }));
+});
+
+client.on('data', (data) => {
+    console.log(data.toString());
+    client.destroy();
+});
     </script>
 </body>
 </html>
