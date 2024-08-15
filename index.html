@@ -14,7 +14,7 @@
     <script>
         function sendRequest() {
             const number = document.getElementById('numberInput').value;
-            fetch(`http://212.58.119.152:8080?number=${number}`)
+            fetch(`https://212.58.119.152:8080?number=${number}`)
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('result').innerText = `Result: ${data}`;
