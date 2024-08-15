@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://https://humble-space-yodel-wrx64rqj775cvgwj-8080.app.github.dev//');
+const socket = new WebSocket('ws://humble-space-yodel-wrx64rqj775cvgwj-8080.app.github.dev//');
 
 socket.onopen = function(event) {
     console.log('Connected to server');
