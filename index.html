@@ -3,37 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Double Number</title>
-    <script>
-    import socket
-
-def main():
-    server_ip = '212.58.119.152'
-    server_port = 8080
-
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((server_ip, server_port))
-
-    number = input("Enter a number: ")
-    
-    # Отправляем число на сервер
-    client.send(number.encode('utf-8'))
-
-    # Получаем и выводим ответ от сервера
-    response = client.recv(1024).decode('utf-8')
-    print(f"Received: {response}")
-
-    client.close()
-
-if __name__ == "__main__":
-    main()
-
-    </script>
+    <title>Multiplayer Game</title>
 </head>
 <body>
-    <h1>Double the Number</h1>
-    <input type="number" id="numberInput" placeholder="Enter a number">
-    <button onclick="sendNumber()">Send</button>
-    <p id="result"></p>
+    <h1>Welcome to Multiplayer Game</h1>
+    <script src="client.js"></script>
 </body>
 </html>
