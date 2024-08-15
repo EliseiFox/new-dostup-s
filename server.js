@@ -1,23 +1,17 @@
-const WebSocket = require('ws');
-const server = new WebSocket.Server({ port: 5555 });
-const clients = [];
+const socket = new WebSocket('ws://humble-space-yodel-wrx64rqj775cvgwj.github.dev/');
 
-server.on('connection', (socket) => {
-    clients.push(socket);
-    socket.on('message', (message) => {
-        clients.forEach((client) => {
-            if (client !== socket && client.readyState === WebSocket.OPEN) {
-                client.send(message);
-            }
-        });
-    });
+socket.onopen = function(event) {
+    console.log('Connected to server');
+};
 
-    socket.on('close', () => {
-        const index = clients.indexOf(socket);
-        if (index > -1) {
-            clients.splice(index, 1);
-        }
-    });
-});
+socket.onmessage = function(event) {
+    console.log('Message from server', event.data);
+};
 
-console.log('Server is running on ws://https://eliseifox.github.io/new-dostup-c/:5555');
+socket.onclose = function(event) {
+    console.log('Disconnected from server');
+};
+
+socket.onerror = function(error) {
+    console.log('Error', error);
+};
