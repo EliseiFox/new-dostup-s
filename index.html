@@ -7,7 +7,12 @@
 </head>
 <body>
   <script>
-    const socket = new WebSocket('ws://192.168.119.119:8080'); // Замените на ваш IP и порт
+    // Определяем протокол WebSocket в зависимости от текущего протокола страницы
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const serverUrl = `${protocol}//192.168.119.119:8080`; // Замените на ваш IP и порт
+
+    // Создаем подключение WebSocket
+    const socket = new WebSocket(serverUrl);
 
     socket.onopen = function(event) {
       console.log('Connected to server');
