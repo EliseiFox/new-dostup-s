@@ -12,16 +12,32 @@
 <body>
     <h1>Data Fetcher</h1>
     <div id="data">Loading data...</div>
-    <script // script.js
-async function fetchData() {
-    try {
-        const response = await fetch('https://api.example.com/data'); // замените на URL нужного вам API
-        const data = await response.json();
-        document.getElementById('data').textContent = JSON.stringify(data);
-    } catch (error) {
-        console.error('Error fetching data:', error);
+    <script // Пример простейшего WebRTC соединения
+
+// Это базовый пример создания peer connection
+const peerConnection = new RTCPeerConnection();
+
+// Добавление обработчиков
+peerConnection.ondatachannel = (event) => {
+    const receiveChannel = event.channel;
+    receiveChannel.onmessage = (event) => {
+        console.log('Received Message:', event.data);
+    };
+};
+
+// Создание data channel
+const dataChannel = peerConnection.createDataChannel('game-data');
+
+// Отправка сообщения через data channel
+dataChannel.send('Hello from peer!');
+
+// Установка ICE кандидатов
+peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+        // Отправка кандидатов другому peer
+        // sendCandidateToPeer(event.candidate);
     }
-}
+};
 
 // Обновляем данные каждую секунду
 setInterval(fetchData, 1000);
