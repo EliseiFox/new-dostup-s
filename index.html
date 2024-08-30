@@ -1,26 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Client</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Fetcher</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #data { margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <script>
-    const socket = new WebSocket('ws://192.168.119.119:8080'); // Замените на ваш IP и порт
+    <h1>Data Fetcher</h1>
+    <div id="data">Loading data...</div>
+    <script // script.js
+async function fetchData() {
+    try {
+        const response = await fetch('https://api.example.com/data'); // замените на URL нужного вам API
+        const data = await response.json();
+        document.getElementById('data').textContent = JSON.stringify(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
 
-    socket.onopen = function(event) {
-      console.log('Connected to server');
-      socket.send('Hello from client');
-    };
+// Обновляем данные каждую секунду
+setInterval(fetchData, 1000);
 
-    socket.onmessage = function(event) {
-      console.log('Message from server:', event.data);
-    };
-
-    socket.onclose = function(event) {
-      console.log('Connection closed');
-    };
-  </script>
+// Получаем данные сразу при загрузке
+fetchData();
+</script>
 </body>
 </html>
