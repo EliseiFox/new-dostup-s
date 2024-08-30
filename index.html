@@ -1,159 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P2P Chat</title>
+    <title>WebRTC Chat</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #messages { margin-bottom: 10px; }
-        #input { width: calc(100% - 100px); }
-        #sendButton { width: 80px; }
-        #connectButton { width: 120px; }
-        textarea { width: 100%; height: 100px; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #chat-container {
+            width: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: white;
+        }
+
+        #chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #fafafa;
+        }
+
+        #message-input {
+            width: calc(100% - 80px);
+            padding: 5px;
+        }
+
+        #send-button {
+            width: 70px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>P2P Chat</h1>
-    <div id="messages"></div>
-    <input type="text" id="input" placeholder="Type a message...">
-    <button id="sendButton">Send</button>
-    <button id="connectButton">Connect</button>
-
-    <h2>Offer SDP</h2>
-    <textarea id="offerSdp" readonly></textarea>
-    <button id="copyOffer">Copy Offer</button>
-
-    <h2>Answer SDP</h2>
-    <textarea id="answerSdp" readonly></textarea>
-    <button id="copyAnswer">Copy Answer</button>
-
-    <h2>ICE Candidate</h2>
-    <textarea id="iceCandidate" readonly></textarea>
-    <button id="copyIce">Copy ICE</button>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="message-input" placeholder="Введите сообщение...">
+        <button id="send-button">Отправить</button>
+    </div>
 
     <script>
-        const messagesDiv = document.getElementById('messages');
-        const input = document.getElementById('input');
-        const sendButton = document.getElementById('sendButton');
-        const connectButton = document.getElementById('connectButton');
+        let localConnection;
+        let remoteConnection;
+        let sendChannel;
+        let receiveChannel;
 
-        const offerSdpTextArea = document.getElementById('offerSdp');
-        const answerSdpTextArea = document.getElementById('answerSdp');
-        const iceCandidateTextArea = document.getElementById('iceCandidate');
+        // Создание PeerConnection
+        localConnection = new RTCPeerConnection();
+        remoteConnection = new RTCPeerConnection();
 
-        const copyOfferButton = document.getElementById('copyOffer');
-        const copyAnswerButton = document.getElementById('copyAnswer');
-        const copyIceButton = document.getElementById('copyIce');
+        // Настройка data channel для отправки сообщений
+        sendChannel = localConnection.createDataChannel("sendChannel");
+        sendChannel.onmessage = (e) => {
+            document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
+        };
 
-        let peerConnection;
-        let dataChannel;
-
-        function logMessage(message) {
-            messagesDiv.innerHTML += `<p>${message}</p>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function createConnection() {
-            peerConnection = new RTCPeerConnection();
-            dataChannel = peerConnection.createDataChannel('chat');
-
-            dataChannel.onmessage = (event) => {
-                logMessage('Peer: ' + event.data);
+        // При создании data channel на удаленной стороне
+        remoteConnection.ondatachannel = (event) => {
+            receiveChannel = event.channel;
+            receiveChannel.onmessage = (e) => {
+                document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
             };
+        };
 
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    iceCandidateTextArea.value = JSON.stringify(event.candidate);
-                }
-            };
-
-            peerConnection.createOffer().then((offer) => {
-                return peerConnection.setLocalDescription(offer);
-            }).then(() => {
-                offerSdpTextArea.value = peerConnection.localDescription.sdp;
-            }).catch(console.error);
-        }
-
-        function handleOffer(offer) {
-            peerConnection = new RTCPeerConnection();
-            dataChannel = peerConnection.createDataChannel('chat');
-
-            dataChannel.onmessage = (event) => {
-                logMessage('Peer: ' + event.data);
-            };
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    iceCandidateTextArea.value = JSON.stringify(event.candidate);
-                }
-            };
-
-            peerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
-                return peerConnection.createAnswer();
-            }).then((answer) => {
-                return peerConnection.setLocalDescription(answer);
-            }).then(() => {
-                answerSdpTextArea.value = peerConnection.localDescription.sdp;
-            }).catch(console.error);
-        }
-
-        function handleAnswer(answer) {
-            peerConnection.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
-        }
-
-        function handleIceCandidate(candidate) {
-            peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
-        }
-
-        function sendMessage() {
-            const message = input.value;
-            if (dataChannel && dataChannel.readyState === 'open') {
-                dataChannel.send(message);
-                logMessage('You: ' + message);
-                input.value = '';
-            }
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
-        }
-
-        sendButton.addEventListener('click', sendMessage);
-
-        connectButton.addEventListener('click', () => {
-            const offer = prompt('Enter offer SDP:');
-            if (offer) {
-                handleOffer(offer);
-            }
-
-            const answer = prompt('Enter answer SDP:');
-            if (answer) {
-                handleAnswer(answer);
-            }
-
-            const iceCandidate = prompt('Enter ICE candidate:');
-            if (iceCandidate) {
-                handleIceCandidate(iceCandidate);
-            }
+        // Обработчик кнопки отправки сообщения
+        document.getElementById("send-button").addEventListener("click", () => {
+            const message = document.getElementById("message-input").value;
+            document.getElementById("chat-box").innerHTML += `<div>Вы: ${message}</div>`;
+            sendChannel.send(message);
+            document.getElementById("message-input").value = '';
         });
 
-        copyOfferButton.addEventListener('click', () => {
-            copyToClipboard(offerSdpTextArea.value);
-        });
-
-        copyAnswerButton.addEventListener('click', () => {
-            copyToClipboard(answerSdpTextArea.value);
-        });
-
-        copyIceButton.addEventListener('click', () => {
-            copyToClipboard(iceCandidateTextArea.value);
-        });
-
+        // Создание offer и answer
+        localConnection.createOffer()
+            .then((offer) => localConnection.setLocalDescription(offer))
+            .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
+            .then(() => remoteConnection.createAnswer())
+            .then((answer) => remoteConnection.setLocalDescription(answer))
+            .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription));
     </script>
 </body>
 </html>
