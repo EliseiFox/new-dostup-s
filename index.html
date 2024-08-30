@@ -7,7 +7,7 @@
 </head>
 <body>
   <script>
-    const socket = new WebSocket('wss://192.168.119.119:8080'); // Замените на ваш IP и порт
+    const socket = new WebSocket('ws://192.168.119.119:8080'); // Замените на ваш IP и порт
 
     socket.onopen = function(event) {
       console.log('Connected to server');
