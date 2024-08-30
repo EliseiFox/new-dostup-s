@@ -16,7 +16,7 @@
         }
 
         #chat-container {
-            width: 300px;
+            width: 600px;
             border: 1px solid #ccc;
             padding: 10px;
             background-color: white;
@@ -40,6 +40,13 @@
             width: 70px;
             padding: 5px;
         }
+
+        .text-area {
+            width: calc(100% - 20px);
+            height: 100px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -47,6 +54,12 @@
         <div id="chat-box"></div>
         <input type="text" id="message-input" placeholder="Введите сообщение...">
         <button id="send-button">Отправить</button>
+
+        <textarea id="offer-text" class="text-area" placeholder="Offer (копируйте сюда offer)"></textarea>
+        <button id="set-offer-button">Установить Offer</button>
+
+        <textarea id="answer-text" class="text-area" placeholder="Answer (копируйте сюда answer)"></textarea>
+        <button id="set-answer-button">Установить Answer</button>
     </div>
 
     <script>
@@ -55,25 +68,23 @@
         let sendChannel;
         let receiveChannel;
 
-        // Создание PeerConnection
-        localConnection = new RTCPeerConnection();
-        remoteConnection = new RTCPeerConnection();
+        function createConnections() {
+            localConnection = new RTCPeerConnection();
+            remoteConnection = new RTCPeerConnection();
 
-        // Настройка data channel для отправки сообщений
-        sendChannel = localConnection.createDataChannel("sendChannel");
-        sendChannel.onmessage = (e) => {
-            document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
-        };
-
-        // При создании data channel на удаленной стороне
-        remoteConnection.ondatachannel = (event) => {
-            receiveChannel = event.channel;
-            receiveChannel.onmessage = (e) => {
+            sendChannel = localConnection.createDataChannel("sendChannel");
+            sendChannel.onmessage = (e) => {
                 document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
             };
-        };
 
-        // Обработчик кнопки отправки сообщения
+            remoteConnection.ondatachannel = (event) => {
+                receiveChannel = event.channel;
+                receiveChannel.onmessage = (e) => {
+                    document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
+                };
+            };
+        }
+
         document.getElementById("send-button").addEventListener("click", () => {
             const message = document.getElementById("message-input").value;
             document.getElementById("chat-box").innerHTML += `<div>Вы: ${message}</div>`;
@@ -81,13 +92,36 @@
             document.getElementById("message-input").value = '';
         });
 
-        // Создание offer и answer
+        document.getElementById("set-offer-button").addEventListener("click", () => {
+            const offerText = document.getElementById("offer-text").value;
+            const offer = new RTCSessionDescription({ type: "offer", sdp: offerText });
+            localConnection.setLocalDescription(offer).then(() => {
+                remoteConnection.setRemoteDescription(localConnection.localDescription);
+            });
+        });
+
+        document.getElementById("set-answer-button").addEventListener("click", () => {
+            const answerText = document.getElementById("answer-text").value;
+            const answer = new RTCSessionDescription({ type: "answer", sdp: answerText });
+            remoteConnection.setLocalDescription(answer).then(() => {
+                localConnection.setRemoteDescription(remoteConnection.localDescription);
+            });
+        });
+
+        createConnections();
+
         localConnection.createOffer()
             .then((offer) => localConnection.setLocalDescription(offer))
-            .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
+            .then(() => {
+                document.getElementById("offer-text").value = localConnection.localDescription.sdp;
+                remoteConnection.setRemoteDescription(localConnection.localDescription);
+            })
             .then(() => remoteConnection.createAnswer())
             .then((answer) => remoteConnection.setLocalDescription(answer))
-            .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription));
+            .then(() => {
+                document.getElementById("answer-text").value = remoteConnection.localDescription.sdp;
+                localConnection.setRemoteDescription(remoteConnection.localDescription);
+            });
     </script>
 </body>
 </html>
