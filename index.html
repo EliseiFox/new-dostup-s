@@ -9,8 +9,8 @@
         #messages { margin-bottom: 10px; }
         #input { width: calc(100% - 100px); }
         #sendButton { width: 80px; }
-        #connectButton { width: 150px; }
-        .hidden { display: none; }
+        #connectButton { width: 120px; }
+        textarea { width: 100%; height: 100px; }
     </style>
 </head>
 <body>
@@ -18,25 +18,33 @@
     <div id="messages"></div>
     <input type="text" id="input" placeholder="Type a message...">
     <button id="sendButton">Send</button>
-    <button id="connectButton">Generate Offer</button>
-    
-    <h2>Offer SDP</h2>
-    <textarea id="offer" class="hidden" rows="6" cols="60" readonly></textarea>
-    
-    <h2>Answer SDP</h2>
-    <textarea id="answer" class="hidden" rows="6" cols="60" readonly></textarea>
+    <button id="connectButton">Connect</button>
 
-    <h2>ICE Candidates</h2>
-    <textarea id="iceCandidates" class="hidden" rows="6" cols="60" readonly></textarea>
-    
+    <h2>Offer SDP</h2>
+    <textarea id="offerSdp" readonly></textarea>
+    <button id="copyOffer">Copy Offer</button>
+
+    <h2>Answer SDP</h2>
+    <textarea id="answerSdp" readonly></textarea>
+    <button id="copyAnswer">Copy Answer</button>
+
+    <h2>ICE Candidate</h2>
+    <textarea id="iceCandidate" readonly></textarea>
+    <button id="copyIce">Copy ICE</button>
+
     <script>
         const messagesDiv = document.getElementById('messages');
         const input = document.getElementById('input');
         const sendButton = document.getElementById('sendButton');
         const connectButton = document.getElementById('connectButton');
-        const offerTextarea = document.getElementById('offer');
-        const answerTextarea = document.getElementById('answer');
-        const iceCandidatesTextarea = document.getElementById('iceCandidates');
+
+        const offerSdpTextArea = document.getElementById('offerSdp');
+        const answerSdpTextArea = document.getElementById('answerSdp');
+        const iceCandidateTextArea = document.getElementById('iceCandidate');
+
+        const copyOfferButton = document.getElementById('copyOffer');
+        const copyAnswerButton = document.getElementById('copyAnswer');
+        const copyIceButton = document.getElementById('copyIce');
 
         let peerConnection;
         let dataChannel;
@@ -56,14 +64,14 @@
 
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
-                    iceCandidatesTextarea.value += JSON.stringify(event.candidate) + '\n';
+                    iceCandidateTextArea.value = JSON.stringify(event.candidate);
                 }
             };
 
             peerConnection.createOffer().then((offer) => {
                 return peerConnection.setLocalDescription(offer);
             }).then(() => {
-                offerTextarea.value = peerConnection.localDescription.sdp;
+                offerSdpTextArea.value = peerConnection.localDescription.sdp;
             }).catch(console.error);
         }
 
@@ -77,7 +85,7 @@
 
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
-                    iceCandidatesTextarea.value += JSON.stringify(event.candidate) + '\n';
+                    iceCandidateTextArea.value = JSON.stringify(event.candidate);
                 }
             };
 
@@ -86,7 +94,7 @@
             }).then((answer) => {
                 return peerConnection.setLocalDescription(answer);
             }).then(() => {
-                answerTextarea.value = peerConnection.localDescription.sdp;
+                answerSdpTextArea.value = peerConnection.localDescription.sdp;
             }).catch(console.error);
         }
 
@@ -105,6 +113,14 @@
                 logMessage('You: ' + message);
                 input.value = '';
             }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
         }
 
         sendButton.addEventListener('click', sendMessage);
@@ -126,8 +142,18 @@
             }
         });
 
-        // Генерация предложения (Offer) при загрузке страницы
-        createConnection();
+        copyOfferButton.addEventListener('click', () => {
+            copyToClipboard(offerSdpTextArea.value);
+        });
+
+        copyAnswerButton.addEventListener('click', () => {
+            copyToClipboard(answerSdpTextArea.value);
+        });
+
+        copyIceButton.addEventListener('click', () => {
+            copyToClipboard(iceCandidateTextArea.value);
+        });
+
     </script>
 </body>
 </html>
