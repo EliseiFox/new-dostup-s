@@ -16,7 +16,7 @@
         }
 
         #chat-container {
-            width: 600px;
+            width: 500px;
             border: 1px solid #ccc;
             padding: 10px;
             background-color: white;
@@ -41,11 +41,13 @@
             padding: 5px;
         }
 
-        .text-area {
+        .code-section {
+            margin-bottom: 10px;
+        }
+
+        .code-section textarea {
             width: calc(100% - 20px);
             height: 100px;
-            padding: 5px;
-            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -55,11 +57,17 @@
         <input type="text" id="message-input" placeholder="Введите сообщение...">
         <button id="send-button">Отправить</button>
 
-        <textarea id="offer-text" class="text-area" placeholder="Offer (копируйте сюда offer)"></textarea>
-        <button id="set-offer-button">Установить Offer</button>
+        <div class="code-section">
+            <h3>Offer</h3>
+            <textarea id="offer-textarea" placeholder="Скопируйте сюда offer из первой вкладки..."></textarea>
+            <button id="set-offer-button">Установить Offer</button>
+        </div>
 
-        <textarea id="answer-text" class="text-area" placeholder="Answer (копируйте сюда answer)"></textarea>
-        <button id="set-answer-button">Установить Answer</button>
+        <div class="code-section">
+            <h3>Answer</h3>
+            <textarea id="answer-textarea" placeholder="Скопируйте сюда answer из второй вкладки..."></textarea>
+            <button id="set-answer-button">Установить Answer</button>
+        </div>
     </div>
 
     <script>
@@ -68,23 +76,25 @@
         let sendChannel;
         let receiveChannel;
 
-        function createConnections() {
-            localConnection = new RTCPeerConnection();
-            remoteConnection = new RTCPeerConnection();
+        // Создание PeerConnection
+        localConnection = new RTCPeerConnection();
+        remoteConnection = new RTCPeerConnection();
 
-            sendChannel = localConnection.createDataChannel("sendChannel");
-            sendChannel.onmessage = (e) => {
+        // Настройка data channel для отправки сообщений
+        sendChannel = localConnection.createDataChannel("sendChannel");
+        sendChannel.onmessage = (e) => {
+            document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
+        };
+
+        // При создании data channel на удаленной стороне
+        remoteConnection.ondatachannel = (event) => {
+            receiveChannel = event.channel;
+            receiveChannel.onmessage = (e) => {
                 document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
             };
+        };
 
-            remoteConnection.ondatachannel = (event) => {
-                receiveChannel = event.channel;
-                receiveChannel.onmessage = (e) => {
-                    document.getElementById("chat-box").innerHTML += `<div>Друг: ${e.data}</div>`;
-                };
-            };
-        }
-
+        // Обработчик кнопки отправки сообщения
         document.getElementById("send-button").addEventListener("click", () => {
             const message = document.getElementById("message-input").value;
             document.getElementById("chat-box").innerHTML += `<div>Вы: ${message}</div>`;
@@ -92,36 +102,34 @@
             document.getElementById("message-input").value = '';
         });
 
+        // Установка offer
         document.getElementById("set-offer-button").addEventListener("click", () => {
-            const offerText = document.getElementById("offer-text").value;
-            const offer = new RTCSessionDescription({ type: "offer", sdp: offerText });
-            localConnection.setLocalDescription(offer).then(() => {
-                remoteConnection.setRemoteDescription(localConnection.localDescription);
-            });
+            const offer = document.getElementById("offer-textarea").value;
+            localConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(offer)))
+                .then(() => localConnection.createAnswer())
+                .then((answer) => {
+                    localConnection.setLocalDescription(answer);
+                    console.log("Offer sent: ", offer);
+                    document.getElementById("answer-textarea").value = JSON.stringify(answer);
+                });
         });
 
+        // Установка answer
         document.getElementById("set-answer-button").addEventListener("click", () => {
-            const answerText = document.getElementById("answer-text").value;
-            const answer = new RTCSessionDescription({ type: "answer", sdp: answerText });
-            remoteConnection.setLocalDescription(answer).then(() => {
-                localConnection.setRemoteDescription(remoteConnection.localDescription);
-            });
+            const answer = document.getElementById("answer-textarea").value;
+            remoteConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
         });
 
-        createConnections();
-
-        localConnection.createOffer()
-            .then((offer) => localConnection.setLocalDescription(offer))
-            .then(() => {
-                document.getElementById("offer-text").value = localConnection.localDescription.sdp;
-                remoteConnection.setRemoteDescription(localConnection.localDescription);
-            })
-            .then(() => remoteConnection.createAnswer())
-            .then((answer) => remoteConnection.setLocalDescription(answer))
-            .then(() => {
-                document.getElementById("answer-text").value = remoteConnection.localDescription.sdp;
-                localConnection.setRemoteDescription(remoteConnection.localDescription);
-            });
+        // Создание offer и answer при загрузке страницы для первой вкладки
+        window.onload = () => {
+            if (!localConnection.localDescription) {
+                localConnection.createOffer()
+                    .then((offer) => localConnection.setLocalDescription(offer))
+                    .then(() => {
+                        document.getElementById("offer-textarea").value = JSON.stringify(localConnection.localDescription);
+                    });
+            }
+        };
     </script>
 </body>
 </html>
